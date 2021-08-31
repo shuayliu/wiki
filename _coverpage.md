@@ -5,4 +5,5 @@
 > Jonah Liu's documents library
 
 [Curriculum Vitae](https://jonahliu.cf/cv)
-[Getting Started](#docsify)
+[Getting Started](#jonah-lius-wiki)
+
