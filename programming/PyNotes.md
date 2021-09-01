@@ -122,24 +122,106 @@ def batchCalculate(dirr):
 ## 去除重复 removeDuplicates
 
 ```python
-def removeDuplicates(dirr):
-    dirlst = os.listdir(dirr)
-    
-    nDir = os.path.join(dirr,'SPLITE')
-    if not os.path.exists(nDir):
-        os.mkdir(nDir)
+def removeDuplicates(srcDir,dstDir):
+    dirlst = os.listdir(srcDir)
+    if dstDir == None:
+        dstDir = os.path.join(srcDir,'SPLITE')
+    if not os.path.exists(dstDir):
+        os.mkdir(dstDir)
     E_lst = []
     for file in dirlst:
-        if os.path.isfile(os.path.join(dirr,file)):
-            with open(os.path.join(dirr,file), encoding='utf8') as _f:
+        absFilePath = os.path.join(srcDir,file)
+        if os.path.isfile(absFilePath):
+            with open(absFilePath, encoding='utf8') as _f:
                 _f.readline()
                 d =_f.readline().split('=')[-1].replace('\n','')
             if not d in E_lst:
                 E_lst.append(d)
-                src =os.path.join(dirr,file).replace('\\','\\\\').replace('/','\\\\')
-                dst =os.path.join(nDir,file).replace('\\','\\\\').replace('/','\\\\')
-                # 针对Windows系统
-                os.system('copy %s %s'%(src,dst))   
+                os.system('copy %s %s'%(os.path.join(srcDir,file).replace('\\','\\\\').replace('/','\\\\'),
+                                        os.path.join(dstDir,file).replace('\\','\\\\').replace('/','\\\\')))   
 
+```
+
+
+
+## 处理多个文件夹下的EIS，并挑选数据
+
+准备工作
+
+```bash
+cd H:/PythonProject/pyDRTtools/
+bpath = "K:/DATA"
+```
+Python Code
+
+```python
+import jDRT_batch as batch
+import time,os
+
+tstart=time.time()
+for file in os.listdir(bpath):
+     srcDir = os.path.join(bpath,file)
+     batch.batchCalculate(srcDir)
+     batch.removeDuplicates(os.path.join(srcDir,'result'),os.path.join(srcDir,'SPLIT'))
+print("USING TIME--------------%s--------------TIME USING"%(time.time()-tstart))
+```
+
+
+
+
+
+## 整合进Originlab
+
+预先打开OriginLab 的COM接口
+
+```python
+import OriginExt as oe
+import sys
+app = oe.Application()
+app.Visible = 0 # app.Visible=1时，time using 46s，app.Visible=0时，time using 18s
+```
+
+参考文档：[OriginLab官方](https://www.originlab.com/doc/ExternalPython/OriginExt)
+
+批处理部分
+
+```python
+tstart = time.time()
+print("Let's Begin------------------------")
+for dirr in os.listdir(bpath):
+     wbook = app.Pages(app.CreatePage(app.OPT_WORKSHEET, dirr, "Origin"))
+     wbook.Layers(0).Destroy()
+     splitedPath = os.path.join(os.path.join(bpath, dirr), 'SPLIT')
+     print("\n--------------\nProcessing DIR:%s"%splitedPath)
+
+     for file in os.listdir(splitedPath):
+        wks = wbook.AddLayer(file)
+
+        sys.stdout.write("\rProcessing file: %s"%file)
+
+        with open(os.path.join(splitedPath, file)) as _f:
+            d = _f.read().splitlines()
+        
+        data = np.array([_d.split('\t') for _d in d[2:]], dtype=np.float64).T
+        wks.SetData(data)
+        
+        # 设置Headers和Column Name
+        headers = d[0].split('\t')
+        comments = d[1].replace('#','')
+        for ii in range(0, len(headers)):
+            wks.Columns(ii).SetLongName(headers[ii])
+            wks.Columns(ii).SetComments(comments)
+
+        sys.stdout.write("\rProcessed File: %s "%file)
+print("\nUSING TIME--------------%s--------------TIME USING" %(time.time()-tstart))
+
+```
+
+退出和保存
+
+```python
+app.Save(R"K:\DRT-full.opgu")
+app.Exit()
+del app
 ```
 
