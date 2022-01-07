@@ -541,3 +541,63 @@ def batchCalculate(dirr):
         data.to_csv(os.path.join(sPath,"STATISTICS.dat"))
 ```
 
+## 处理FRA数据，3D mapping（位置信息在文件夹中）并导入到Originlab
+
+```python
+import os,sys
+import numpy as np
+baseDir = R'C:\Users\jonah.JONAHLIU-WIN10\Desktop\txtFRA'
+
+tmpFile = R'C:\Users\jonah.JONAHLIU-WIN10\Desktop\txtFRA\G1\BatchTool_FRA_20210908-200326_POSX96-POSY32.txt'
+
+import OriginExt as oe
+app = oe.Application()
+app.Visible = 0
+
+subfolder = 'G4'
+workingDir = os.path.join(baseDir,subfolder)
+matrix = []
+
+
+wbook = app.Pages(app.CreatePage(app.OPT_WORKSHEET, "EIS", "Origin"))
+wbook.Layers(0).Destroy()
+
+for f in os.listdir(workingDir):
+    
+    posStr = f.split('.')[0].split(sep='_')[3].split('-')
+    
+    x = float(posStr[0][4:])/256*1.262 #从像素点转换为长度
+    y = float(posStr[1][4:])/256*1.262
+    
+    data = np.loadtxt(os.path.join(workingDir,f),skiprows=1)
+
+    conductance = 1./data[-1][1] 
+    matrix.append([x,y,conductance])
+
+    #Originlab dealing
+    wks = wbook.AddLayer('-'.join(posStr))
+    wks.SetData(data.T)
+    
+    with open(os.path.join(workingDir,f)) as _f:
+        header =  _f.readline().split(' ')
+        
+    for ii in range(0,len(header)):
+        wks.Columns(ii).SetLongName(header[ii])
+        
+    cmd = """plotxy iy:=[{0}]{1}!(2,3) plot:=201 ogl:=[<new template:=NyquistPlot name:={2}-Nyq-{1}>];\
+        plotxy iy:=[{0}]{1}!(1,4) plot:=201 ogl:=[<new template:=BodePlot name:={2}-Bode-{1}>];\
+            plotxy iy:=[{0}]{1}!(1,5) plot:=201 ogl:=2;""".format(wbook.GetName(),wks.GetName(),subfolder)
+
+    app.Execute(cmd)
+
+    app.Pages("{0}-Nyq-{1}".format(subfolder,wks.GetName())).Show = False #减小内存占用
+    app.Pages("{0}-Bode-{1}".format(subfolder,wks.GetName())).Show = False
+
+mat = np.array(matrix)
+    
+# rename file to sort
+for f in os.listdir(baseDir):
+    lst = f[:-4].split(sep='_')
+    nf = '_'.join([lst[0], lst[1], lst[3], lst[2]])
+    os.rename(os.path.join(baseDir, f), os.path.join(baseDir, nf)+'.txt')
+```
