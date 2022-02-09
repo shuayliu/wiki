@@ -593,6 +593,9 @@ for f in os.listdir(workingDir):
     app.Pages("{0}-Nyq-{1}".format(subfolder,wks.GetName())).Show = False #减小内存占用
     app.Pages("{0}-Bode-{1}".format(subfolder,wks.GetName())).Show = False
 
+for pg in app.GetPages():
+    pg.Show = False#降低内存占用
+    
 mat = np.array(matrix)
     
 # rename file to sort
@@ -601,3 +604,65 @@ for f in os.listdir(baseDir):
     nf = '_'.join([lst[0], lst[1], lst[3], lst[2]])
     os.rename(os.path.join(baseDir, f), os.path.join(baseDir, nf)+'.txt')
 ```
+
+## 调用系统命令复制文件到指定文件夹
+
+```python
+
+d = R"path/to/dir"
+dest = R"dest/path/dir"
+for _d in os.listdir(d):
+    absDir = os.path.join(d,_d)
+    if os.path.isdir(absDir):
+        for f in os.listdir(absDir):
+            print(f)
+            if f[-5:]=='.docx' or f[-4:]=='.doc':
+                absFile = os.path.join(absDir,f)
+                os.system(f'copy "{absFile}" "{dest}"')
+```
+
+## docx 转pdf
+
+```python
+import os    
+# DOCX to PDF    
+for f in os.listdir('K:/files'):
+    if f[-5:]==".docx":
+        absFile = os.path.join('K:/files',f)
+        pdfName = absFile.replace('.docx','.pdf')
+        print(pdfName)
+        os.system(f'ebook-convert "{absFile}" "{pdfName}"')
+```
+
+## pdfminer提取pdf内容
+
+```python
+from pdfminer.pdfinterp import PDFResourceManager,PDFPageInterpreter
+from pdfminer.pdfpage import PDFPage
+from pdfminer.converter import HTMLConverter,TextConverter
+
+fileDir = R"K:/ReadNotes"
+fout =  R"K:/output.txt"
+fname = os.path.join(fileDir,os.listdir(fileDir)[0])
+outfp =open(fout,'w',encoding='utf-8')
+
+rsrcmgr = PDFResourceManager()
+
+#device = HTMLConverter(rsrcmgr, outfp)
+
+device = TextConverter(rsrcmgr, outfp)
+
+with open(fname,'rb') as fp:
+    interprt = PDFPageInterpreter(rsrcmgr, device)
+    for page in PDFPage.get_pages(fp):
+        interprt.process_page(page)
+        
+device.close()
+outfp.close()
+
+```
+
+
+
+
+
