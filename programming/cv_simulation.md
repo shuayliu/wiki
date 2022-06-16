@@ -369,3 +369,53 @@ plt.legend()
 
 ![image-20220601174521967](.images/image-20220601174521967.png)
 
+
+
+## Nernst机理下扫速随着动力学的变化趋势
+
+> ! it runs a very long time
+
+```python
+theta_i = -20.0;
+theta_v = 20.0;
+sigma = 100
+deltaTheta = 0.02;
+deltaX = 0.1;
+
+
+#B-V
+K0 = 100
+a = 0.5
+
+thetaArray = generateThetaArray(theta_i,theta_v,deltaTheta)
+
+sAry = numpy.array([0.05,0.1,0.2,0.5,1,2,5,10,20,50,100,200,500,800,1000,2000,5000])
+K0Ary = [0.5,1,5,10,100,1000]
+import scipy.signal as ss
+peaks = []
+
+for _k in K0Ary:
+    K0 = _k
+    peaks = []
+    for _s in sAry:
+        initialise(theta_i,theta_v,_s,deltaTheta)
+        P = generatePMatrix(generateDeltaXArray(deltaX,increaseRatio = 1.01))
+        C = numpy.ones(iterX)
+        flux = performSimulation(thetaArray)
+    
+        peaks.extend(ss.find_peaks(numpy.abs(flux))[0])
+    
+    nPeaks = numpy.array(peaks).reshape(-1,2)
+    dE = [(thetaArray[_pk[0]]-thetaArray[_pk[1]]) for _pk in nPeaks]
+    
+    plt.plot(numpy.log(sAry/38.93),numpy.array(dE)*25.68,label=f'K0={K0}')
+
+plt.xlabel('LOG(v)')
+plt.ylabel('$\Delta E_{p}$ / mV')
+plt.legend()
+```
+
+
+
+![download](.images/download.png)
+
