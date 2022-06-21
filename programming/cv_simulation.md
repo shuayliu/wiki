@@ -367,11 +367,11 @@ plt.legend()
 > ! it runs a very long time
 
 ```python
-theta_i = -20.0;
-theta_v = 20.0;
-sigma = 100
+theta_i = -10.0;
+theta_v = 10.0;
+sigma = 10
 deltaTheta = 0.02;
-deltaX = 0.1;
+deltaX = 0.02;
 
 
 #B-V
@@ -380,8 +380,14 @@ a = 0.5
 
 thetaArray = generateThetaArray(theta_i,theta_v,deltaTheta)
 
-sAry = numpy.array([0.05,0.1,0.2,0.5,1,2,5,10,20,50,100,200,500,800,1000,2000,5000])
-K0Ary = [0.5,1,5,10,100,1000]
+sAry =numpy.array( [0.05,0.08,
+                    0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,
+                    1,2,3,4,5,6,7,8,9,
+                    10,20,30,40,50,60,70,80,90,
+                    100,200,300,400,500,600,700,800,900
+                   ])
+
+K0Ary = [50,100,20]
 import scipy.signal as ss
 peaks = []
 
@@ -397,17 +403,16 @@ for _k in K0Ary:
         peaks.extend(ss.find_peaks(numpy.abs(flux))[0])
 
     nPeaks = numpy.array(peaks).reshape(-1,2)
-    dE = [(thetaArray[_pk[0]]-thetaArray[_pk[1]]) for _pk in nPeaks]
+    dE =  numpy.array(thetaArray[nPeaks[:,0]]-thetaArray[nPeaks[:,1]])*25.68
 
-    plt.plot(numpy.log(sAry/38.93),numpy.array(dE)*25.68,label=f'K0={K0}')
+    plt.plot(-2*numpy.log(K0/numpy.sqrt(sAry)),numpy.array(dE)*25.68,'-o',label=f'K0={K0}')
 
-plt.xlabel('LOG(v)')
+plt.xlabel('-2LOG(Lambda)')
 plt.ylabel('$\Delta E_{p}$ / mV')
 plt.legend()
 ```
 
 ![download](.images/download.png)
-<<<<<<< HEAD
 
 
 
@@ -446,8 +451,3 @@ for f in os.listdir('./'):
 
 np.savetxt(f'K:/v-dEp-Ru={Ru}.txt', np.reshape(np.array(lst),(len(lst)//2,2)),fmt='%s')
 ```
-
-
-
-=======
->>>>>>> 6603797439fb3564961c55b64b77d2f4937e6452
