@@ -2,8 +2,6 @@
 
 reference: Understanding voltammetry
 
-
-
 ## Nernst机理
 
 ```python
@@ -52,10 +50,10 @@ _deltaX = deltaX
 while _sum < maxX:
     if _sum > XBorder:
         _deltaX = _deltaX * increaseRation    
-        
+
     deltaXlist.append(_deltaX)
     _sum = _sum + deltaXlist[-1]
-    
+
 
 deltaXarray = numpy.array(deltaXlist)
 
@@ -98,18 +96,18 @@ P[-1,-2]=alpha[-1]
 def surficialConcentration(theta):
     # #Nernst
     # c = 1.0/(1.0 + numpy.exp(theta))
-    
+
     #B-V
     global deltaX
     global K0
     global a
-    
+
     f = numpy.exp(-a*theta)
-    
-    
+
+
     c = deltaX * f * K0 #* numpy.exp(theta)
-    
-    
+
+
     return c
 
 Cinit = numpy.ones(iterX)
@@ -137,20 +135,20 @@ for t in range(iterT):
     else:
         theta = theta - deltaTheta
         # 
-    
+
     P[0,0] = 1 + deltaX * numpy.exp(-a*theta) * K0 *( 1 + numpy.exp(theta))
 
     # 都随着theta变化，每次都要更新
     C[0] = surficialConcentration(theta)
     # C[0] = deltaX * numpy.exp(-a*theta) * numpy.exp(theta) * K0
     C[-1]= 1   
-    
+
     C = scipy.linalg.solve(P,C)
 
     thetaArray[t] = theta
-    
+
     flux[t] = (-C[2] + 4*C[1] - 3*C[0])/(2.0*deltaX)
- 
+
 
 plt.plot(thetaArray,flux,label= f'K0={K0}')
 
@@ -158,13 +156,9 @@ plt.plot(thetaArray,flux,label= f'K0={K0}')
 plt.legend()
 ```
 
-
-
 模拟结果：
 
 ![image-20220601174146979](.images/image-20220601174146979.png)
-
-
 
 ## Catalytic Mechsim
 
@@ -219,10 +213,10 @@ _deltaX = deltaX
 while _sum < maxX:
     if _sum > XBorder:
         _deltaX = _deltaX * increaseRation    
-        
+
     deltaXlist.append(deltaX)
     _sum = _sum + deltaXlist[-1]
-    
+
 
 deltaXarray = numpy.array(deltaXlist)
 iterX = len(deltaXarray)
@@ -232,7 +226,7 @@ def surficialConcentration(theta,mechanismName):
     global deltaX
     global K0
     global a
-    
+
     if "Nernst" == mechanismName:
         return 1.0/(1.0 + numpy.exp(theta))
     if "BV" == mechanismName:
@@ -240,7 +234,7 @@ def surficialConcentration(theta,mechanismName):
         return deltaX * f * K0 
     if "Macus"== mechanismName:
         pass
-    
+
 
 
 
@@ -269,7 +263,7 @@ for _r in range(iterX):
         P[rA,rA]   = betaA[_r]
         P[rA,rA+1] = -K1 * deltaT
         P[rA,rA+2] = gamma[_r]
-        
+
         rB = 2 * _r + 1
         P[rB,rB-2] = alpha[_r]
         P[rB,rB-1] = -Km1 * deltaT
@@ -287,7 +281,7 @@ for _it in range(2*iterX):
 # P[0,:] P[1,:]  theta depedence
 cRed = surficialConcentration(theta, "BV")
 cOxi  = numpy.exp(theta) * cRed
- 
+
 P[0,0] = 1.0 + cRed
 P[0,1] = -cOxi
 P[0,2] = -1
@@ -328,7 +322,7 @@ for t in range(iterT):
     # P[0,:] P[1,:]  theta depedence
     cRed = surficialConcentration(theta, "BV")
     cOxi  =  cRed * numpy.exp(theta)
-     
+
     P[0,0] = 1.0 + cRed
     P[0,1] = -cOxi
     P[0,2] = -1
@@ -349,29 +343,26 @@ for t in range(iterT):
     C[1]  = 0
     C[-2] = 1.0
     C[-1] = CBinit
-  
-    
-  
-    
+
+
+
+
     C = scipy.linalg.solve(P,C)
     thetaArray[t] = theta
     flux[t] = (-C[4] + 4*C[2] - 3*C[0])/(2.0*deltaX)
- 
+
 
 plt.plot(thetaArray,flux,label= f'K0={K0}')
 
 
 plt.legend()
-
 ```
 
 结果：
 
 ![image-20220601174521967](.images/image-20220601174521967.png)
 
-
-
-## Nernst机理下扫速随着动力学的变化趋势
+## BV机理下峰电位差随着动力学的变化趋势
 
 > ! it runs a very long time
 
@@ -402,12 +393,12 @@ for _k in K0Ary:
         P = generatePMatrix(generateDeltaXArray(deltaX,increaseRatio = 1.01))
         C = numpy.ones(iterX)
         flux = performSimulation(thetaArray)
-    
+
         peaks.extend(ss.find_peaks(numpy.abs(flux))[0])
-    
+
     nPeaks = numpy.array(peaks).reshape(-1,2)
     dE = [(thetaArray[_pk[0]]-thetaArray[_pk[1]]) for _pk in nPeaks]
-    
+
     plt.plot(numpy.log(sAry/38.93),numpy.array(dE)*25.68,label=f'K0={K0}')
 
 plt.xlabel('LOG(v)')
@@ -415,9 +406,8 @@ plt.ylabel('$\Delta E_{p}$ / mV')
 plt.legend()
 ```
 
-
-
 ![download](.images/download.png)
+<<<<<<< HEAD
 
 
 
@@ -459,3 +449,5 @@ np.savetxt(f'K:/v-dEp-Ru={Ru}.txt', np.reshape(np.array(lst),(len(lst)//2,2)),fm
 
 
 
+=======
+>>>>>>> 6603797439fb3564961c55b64b77d2f4937e6452
