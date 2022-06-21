@@ -419,3 +419,43 @@ plt.legend()
 
 ![download](.images/download.png)
 
+
+
+## 峰电位差与扫速、未补偿电阻的关系
+
+```python
+ import numpy as np
+ import os
+
+Ei = -0.5; #in Volt
+Ef = +0.5; #in Volt
+Eo = 0; # in Volt
+S = 0.1; # in cm2
+C0 = 0.001; #in mol/L
+T = 298.15; #in K
+D = 1e-6; #in cm2/s
+Ru = 100; #in Ohm
+Cd = 1e-6 #in F
+ks = 0.1 #in cm/s
+vAry=[0.1,0.2,0.5,0.8,1.0,2,5,8,10,20,50,80,100,200,500,1000,2000]; #in Volt/s
+
+for _v in vAry:
+    with open("input.txt",'w') as _f:
+        _f.write("%f\n%f\n%f\n%f\n%f\n%f\n%f\n%f\n%f\n%f\n%f\n"%(Ei,Ef,Eo,S,C0,T,D,Ru,Cd,ks,_v))
+        rv=os.system("CV_Simulation.exe")
+
+lst=[]
+for f in os.listdir('./'):
+    if f.startswith('stdout-'):
+        print(f)
+        with open(f,'r') as _f:
+            _v = f.split('-')[1][:-6]
+            lmbd = ks*np.sqrt((8.314*T)/(96487*float(_v)*D))
+            dEp = _f.readlines()[-1][10:-2]
+            lst += [float(_v),float(dEp)]
+
+np.savetxt(f'K:/v-dEp-Ru={Ru}.txt', np.reshape(np.array(lst),(len(lst)//2,2)),fmt='%s')
+```
+
+
+
