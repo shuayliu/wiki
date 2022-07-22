@@ -451,3 +451,170 @@ for f in os.listdir('./'):
 
 np.savetxt(f'K:/v-dEp-Ru={Ru}.txt', np.reshape(np.array(lst),(len(lst)//2,2)),fmt='%s')
 ```
+
+
+
+## Ohmic Drop 的数值解法：
+
+Code Ref:  [1]	C. P. Andrieux, D. Garreau, P. Hapiot, J. Pinson, J. M. Savéant, Journal of Electroanalytical Chemistry and Interfacial Electrochemistry 1988, 243, 321-335.
+
+it is the python version of the code
+
+```python
+def CVSimulation(
+Ei,#in Volt
+Ef,#in Volt
+Eo,#in Volt
+S,#in cm2
+C0,#in mol/L
+T,#in K
+D,#in cm2/s
+Ru,#in Rho
+Cd,#in F/m2
+ks,#in cm s
+v,# in V/s
+Alpha = 0.5
+):
+
+    #Unit transformation
+    S = S/10000#Conversion cm2 en m2
+    C0 = C0 *1000.0#mol.L-1 en mol.m-3
+    D = D / 10000#Conversion cm2.s-1 en m2.s-1
+    ks = ks/100#Conversion cm.s-1 en m.s-1
+
+
+    epsilon = 0.001
+    Pi = 3.14159265358979323846264338327950288419716939937510
+
+
+    #dimensionless
+
+    F = 96485.3329
+    R = 8.3144621
+    FRT = F/R/T
+    DFRT = D*FRT
+    FSC0 = F*S*C0
+
+    u = - FRT*(Ei-Eo)
+    CsiM = FRT*(Ef-Eo)
+
+    Lambda = ks/np.sqrt(FRT*D*v)
+    Rho = FRT*Ru*FSC0*np.sqrt(FRT*D*v)
+    Gamma = Cd*np.sqrt(v)/FSC0/np.sqrt(DFRT)
+    Theta = Rho*Gamma
+
+    #for simulation
+    Nmax = 1000
+    dtau = (CsiM+u)/Nmax
+    Tau = dtau
+
+    Rmn = [(_m+1.0)**1.5-2.0*(_m)**1.5+(_m-1)**1.5 for _m in range(1,2*Nmax+1)]
+
+    Psif = np.zeros(Nmax*2)
+    PsiTotal = np.zeros(Nmax*2)
+    Potential = np.zeros(Nmax*2)
+
+    #initial value
+    Csi = -u
+    T3 = Theta/dtau
+
+#    print("Lambda %f,Rau %f, Gamma %f, Dtau %f"%(Lambda,Rho,Gamma,dtau))
+
+    #forward scan
+    for n in range(1,Nmax+1):
+
+        Potential[n-1] = Csi
+
+        T1 = np.exp(-Alpha*Csi)/Lambda
+        T2 = 4.0/3.0*np.sqrt(dtau/Pi)*(1.0 + np.exp(-Csi))
+
+        Sum = np.sum([(Psif[m]*(1.0 + T3)-Psif[m-1]*T3)*Rmn[n-m] for m in range(1,n)])
+
+        
+        Psif[n] = Psif[n-1]
+
+        PsiProv = -999.0
+        _N = 0
+
+        while (np.abs(Psif[n]-PsiProv)>epsilon and _N<10000):
+
+            Psif[n] = (Psif[n]+100.0*PsiProv)/101.0
+
+            PsiProv = Psif[n]
+
+            #Csi will interate later Csi = u + dtao*n
+            CsiPrim = Csi - Rho*Psif[n] - Theta*(1.0-np.exp(-Tau/Theta))
+            T1 = np.exp(-Alpha*CsiPrim)/Lambda
+            T2 = 4.0/3.0*np.sqrt(dtau/Pi)*(1.0 + np.exp(-CsiPrim))
+
+            Psif[n] = (1 + - T2*Sum + (T1*T3 + T2*T3)*Psif[n-1])/(T1 + T2 + T1*T3 + T2*T3)
+
+            _N += 1
+            
+        if n%100 == 0:
+            print("\r\r n %d,_N %d, diff %f"%(n,_N,np.abs(Psif[n]-PsiProv)),end='')
+        
+        PsiTotal[n] = Psif[n] + Gamma*(1-np.exp(-Tau/Theta))
+
+        Csi = Csi + dtau
+        Tau = Tau + dtau
+    Tauf = Tau - dtau
+    #backword scan
+    for n in range(Nmax,2*Nmax):
+
+        Potential[n-1] = Csi
+
+        T1 = np.exp(-Alpha*Csi)/Lambda
+        T2 = 4.0/3.0*np.sqrt(dtau/Pi)*(1.0 + np.exp(-Csi))
+
+        Sum = np.sum([(Psif[m]*(1+T3)-Psif[m-1]*T3)*Rmn[n-m] for m in range(1,n)])
+
+        Psif[n] = Psif[n-1]
+
+        if Theta>0.001:
+            T4 = Theta*(2*np.exp((Tauf-Tau)/Theta) - np.exp(-Tau/Theta) -1.0)
+        else:
+            T4 = 0.0
+
+        PsiProv = -999.0
+        _N=0
+        while np.abs(PsiProv - Psif[n])>epsilon:
+            Psif[n] = (Psif[n]+100.0*Psif[n])/101.0
+            PsiProv = Psif[n]
+
+            #Csi will interate later Csi = u + dtao*n
+            CsiPrim = Csi - Rho*Psif[n] - T4
+            T1 = np.exp(-Alpha*CsiPrim)/Lambda
+            T2 = 4.0/3.0*np.sqrt(dtau/Pi)*(1.0 + np.exp(-CsiPrim))
+
+            Psif[n] = (1 + (T1*T3 + T2*T3)*Psif[n-1] - T2*Sum)/(T1 + T2 + T1*T3 + T2*T3)
+
+            _N += 1
+            
+        if n%100 == 0:
+            print("\r\r n %d,_N %d, diff %f"%(n,_N,np.abs(Psif[n]-PsiProv)),end='')
+    
+        PsiTotal[n] = Psif[n] + Gamma*(2*np.exp((Tauf-Tau)/Theta) - np.exp(-Tau/Theta) -1.0)
+
+        Csi = Csi - dtau
+        Tau = Tau + dtau
+
+    return Potential[:-1],Psif[:-1]
+
+Ei=-0.5#in Volt
+Ef=0.5#in Volt
+Eo=0#in Volt
+S=0.1#in cm2
+C0=0.001#in mol/L
+T=298.15#in K
+D=1e-6#in cm2/s
+Ru=0#in Rho
+Cd=1e-4#in F/m2
+ks=10000#in cm s
+v=0.000000001# in V/s
+Alpha = 0.5
+Pot,Cur= CVSimulation(Ei,Ef,Eo,S,C0,T,D,Ru,Cd,ks,v,Alpha)
+```
+
+![CV-Ohmic-Drop](.images/cv-ohmic-drop.png)
+
