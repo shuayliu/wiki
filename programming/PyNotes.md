@@ -664,5 +664,27 @@ outfp.close()
 
 
 
+## 使用分析模板（ogw,ogwu）处理Origin文件
 
+```python
+
+import os
+import OriginExt as oe
+
+directory = R"E:\data"
+template  = R"C:\Users\PC\Documents\OriginLab\User Files\pac.ogw" 
+saveFile  = R"E:\saveFile.opju"
+
+
+app = oe.Application()
+
+# Visible
+app.Visible = 0
+
+app.Execute('batchProcess name:="' + template + '" fname:="' + '\n'.join([os.path.join(directory,f) for f in os.listdir(directory)])  + '" id:=<none> fill:=resource append:=Result;')
+
+
+app.Save(saveFile)
+
+```
 

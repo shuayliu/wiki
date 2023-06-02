@@ -5,5 +5,6 @@
   - [PicoView目录下文件分析笔记](programming/picviewAnalysis.md)
   - [PicoScript笔记](programming/picoScriptNotes.md)
   - [Python Notes](programming/PyNotes.md)
+  - [Autohotkey Notes](programming/AHKNotes.md)
   - [CV-Simulation](programming/cv_simulation.md)
 
