@@ -1,9 +1,10 @@
 ![logo](_media/icon.png)
 
-# Jonah Liu's Wiki
+# Shuay's Wiki 
 
-> Jonah Liu's documents library
+> Shuay的文档库 
 
-[Curriculum Vitae](https://jonahliu.cf/cv)
-[Getting Started](#jonah-lius-wiki)
+
+[Getting Started](#shuays-wiki)
+[Curriculum Vitae](https://cv.shuay.cn/)
 

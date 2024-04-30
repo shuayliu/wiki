@@ -1,0 +1,5 @@
+- [返回上一级](notes/)
+- [AFM-AUTOLAB](notes/AFM-AUTOLAB/)
+    - [AFM-AUTOALB控制策略](notes/AFM-AUTOLAB/AFM-AUTOLAB-Strategy.md)
+    - [AUTOALB-SDK控制系列（一）](notes/AFM-AUTOLAB/AUTOALB-SDK-Control1.md)
+    - [AUTOLAB-SDK控制系列（二）](notes/AFM-AUTOLAB/PicoviewAndAUTOLAB-Final.md)

@@ -1,0 +1,6 @@
+- [返回上一级](notes/)
+- [Electrochemical Spectroscopy Notes](notes/EIS/)
+    - [等效电路元件-Gerischer Element](notes/EIS/GerischerElement.md)
+    - [等效电路原件-T Element](notes/EIS/TElement.md)
+    - [等效电路原件-O Element](notes/EIS/OElement.md)
+    - [DRT文献笔记-2021-09](notes/EIS/DRT_Notes_2021-09.md)
