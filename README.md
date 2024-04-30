@@ -1,4 +1,4 @@
-## Shuay’s Wiki
+## Shuay's Wiki
 
 欢迎来到Shuay的文档库，这里存放了我的一些笔记。<br>
 Welcome to Shuay’s document library, where stores my notes on academics and works.
