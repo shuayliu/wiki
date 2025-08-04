@@ -117,7 +117,23 @@ def batchCalculate(dirr):
                 sys.stdout.write('\r'+(j*80//len(dirlst))*'-'+'->|'+"\b")
 ```
 
+## 批量移动文件
 
+例：移动根目录下子文件夹中的*(1).txt文件到特定文件夹
+
+
+```python
+from pathlib import Path
+
+root = Path('.')
+dirs = [p for p in root.iterdir() if p.is_dir()]
+
+for d in dirs:
+    dest = d/'1'
+    dest.mkdir(exist_ok=True)
+    for f in d.glob('*.txt'):
+        f.replace(dest/f.name)
+```
 
 ## 去除重复 removeDuplicates
 
