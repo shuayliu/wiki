@@ -704,3 +704,150 @@ app.Save(saveFile)
 
 ```
 
+## 生成Palette的Pal文件，结合Color Editor.opx插件调整颜色
+
+```python
+
+hex_list = ["#F9A7C6","#A7D8F0","#8AD6C4","#FFE066","#FFB366","#D4B5F9"]
+with open("macaron.pal", "w") as f:
+    f.write("JASC-PAL\n0100\n{}\n".format(len(hex_list)))
+    for h in hex_list:
+        r, g, b = tuple(int(h[i:i+2], 16) for i in (1, 3, 5))
+        f.write(f"{r} {g} {b}\n")
+
+```
+
+
+线性插值成256色
+
+```python
+
+import numpy as np
+
+# === 配置区 ===
+hex_colors = ["#F9A7C6", "#FFE066", "#D4B5F9"]  # 起始/中间/结束颜色
+n_levels = 256
+out_file = "macaron256.pal"
+
+# === 转换 hex -> RGB ===
+rgb = np.array([[int(c[i:i+2], 16) for i in (1, 3, 5)] for c in hex_colors], dtype=float)
+
+# === 分段线性插值 ===
+m = len(rgb)
+xp = np.linspace(0, 1, m)
+x = np.linspace(0, 1, n_levels)
+r = np.interp(x, xp, rgb[:, 0])
+g = np.interp(x, xp, rgb[:, 1])
+b = np.interp(x, xp, rgb[:, 2])
+rgb256 = np.stack([r, g, b], axis=1).round().astype(int)
+
+# === 写 JASC-PAL 文件 ===
+with open(out_file, "w") as f:
+    f.write(f"JASC-PAL\n0100\n{n_levels}\n")
+    for r, g, b in rgb256:
+        f.write(f"{r} {g} {b}\n")
+
+print(f"已生成 {out_file}")
+
+
+```
+
+
+## 直接生成OriginLab的oth色盘文件
+
+从颜色列表生成oth文件
+```python
+theme_name = "CustomMacaron"
+
+# 1. HEX → RGB（嵌套推导式，兼容不带 #）
+hex_colors = [
+    "#F9A7C6", "#F7A8D8", "#E7A7E2", "#D7A7E8", "#C7A7EE",
+    "#B7B7F3", "#A7C8F8", "#A7D8F0", "#8AD6C4", "#91D9B8",
+    "#A9E4C1", "#B5E9BA", "#FFE066", "#FFDA75", "#FFB366",
+    "#FFB375", "#FFB385", "#FFB399", "#D4B5F9", "#D9B5F0"
+]
+rgb_colors = [[int(c[i:i+2], 16) for i in (0, 2, 4)]
+              for c in (h.lstrip('#') for h in hex_colors)]
+
+# 2. 写 .oth（符合 Origin 要求）
+with open(f"{theme_name}.oth", "w", encoding="utf-8") as f:
+    f.write('<?xml version="1.0" encoding="utf-8"?>\n')
+    f.write('<OriginTheme>\n')
+    f.write(f'  <Name>{theme_name}</Name>\n')
+    f.write('  <Type>ColorList</Type>\n')
+    f.write('  <Colors>\n')
+    for r, g, b in rgb_colors:
+        f.write(f'    <Color R="{r}" G="{g}" B="{b}"/>\n')
+    f.write('  </Colors>\n')
+    f.write('</OriginTheme>\n')
+
+print(f"{theme_name}.oth 已生成（{len(rgb_colors)} 色）")
+
+theme_name = "CustomMacaron"
+
+# HEX → RGB（嵌套推导式，兼容不带 #）
+hex_colors = [
+    "#F9A7C6", "#F7A8D8", "#E7A7E2", "#D7A7E8", "#C7A7EE",
+    "#B7B7F3", "#A7C8F8", "#A7D8F0", "#8AD6C4", "#91D9B8",
+    "#A9E4C1", "#B5E9BA", "#FFE066", "#FFDA75", "#FFB366",
+    "#FFB375", "#FFB385", "#FFB399", "#D4B5F9", "#D9B5F0"
+]
+rgb_colors = [[int(c[i:i+2], 16) for i in (0, 2, 4)]
+              for c in (h.lstrip('#') for h in hex_colors)]
+
+# 写 .oth（无 BOM UTF-8）
+with open(f"{theme_name}.oth", "wb") as f:
+    f.write(b'<OriginTheme>\n')
+    f.write(f'  <Name>{theme_name}</Name>\n'.encode("utf-8"))
+    f.write(b'  <Type>ColorList</Type>\n')
+    f.write(b'  <Colors>\n')
+    for r, g, b in rgb_colors:
+        f.write(f'    <Color R="{r}" G="{g}" B="{b}"/>\n'.encode("utf-8"))
+    f.write(b'  </Colors>\n')
+    f.write(b'</OriginTheme>\n')
+
+print(f"{theme_name}.oth 已生成（{len(rgb_colors)} 色，无 BOM UTF-8）")
+
+
+```
+
+
+
+线性插值256色
+
+```python
+import numpy as np
+from pathlib import Path
+
+# 1. 输入颜色（支持 2~N 色）
+hex_colors = ["#F9A7C6", "#FFE066", "#D4B5F9"]
+
+# 2. HEX -> RGB（兼容带/不带 #）
+rgb = np.array([[int(s[i:i+2],16) for i in (0,2,4)]
+                for s in (h.strip().lstrip('#') for h in hex_colors)], dtype=float)
+
+# 3. n_levels 线性插值（默认 256）
+n_levels = 256
+x = np.linspace(0, 1, n_levels)
+xp = np.linspace(0, 1, len(rgb))
+r = np.interp(x, xp, rgb[:,0])
+g = np.interp(x, xp, rgb[:,1])
+b = np.interp(x, xp, rgb[:,2])
+rgb256 = np.stack([r, g, b], axis=1).round().astype(int)
+
+# 4. 写 .oth
+theme_name = "CustomMacaron"
+oth_path = Path(f"{theme_name}.oth")
+with oth_path.open("w", encoding="utf-8") as f:
+    f.write('<OriginTheme>\n')
+    f.write(f'  <Name>{theme_name}</Name>\n')
+    f.write('  <Type>ColorList</Type>\n')
+    f.write('  <Colors>\n')
+    for rr, gg, bb in rgb256:
+        f.write(f'    <Color R="{int(rr)}" G="{int(gg)}" B="{int(bb)}"/>\n')
+    f.write('  </Colors>\n')
+    f.write('</OriginTheme>\n')
+
+print(f"{oth_path} 已生成（{n_levels} 色），路径：{oth_path.resolve()}")
+
+```
