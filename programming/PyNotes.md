@@ -851,3 +851,67 @@ with oth_path.open("w", encoding="utf-8") as f:
 print(f"{oth_path} 已生成（{n_levels} 色），路径：{oth_path.resolve()}")
 
 ```
+
+
+## 通过ntp服务器获取网络时间-对时
+
+尽可能使用原生python库
+
+```python
+import socket
+import struct
+import time
+
+def get_ntp_time(ntp_server="time.nist.gov"):
+    # NTP服务器地址和端口
+    NTP_PORT = 123
+    NTP_PACKET_FORMAT = "!12I"
+    NTP_EPOCH = 2208988800  # 1970-01-01 00:00:00 in seconds since 1900-01-01 00:00:00
+
+    # 创建一个NTP请求包
+    ntp_request = struct.pack(NTP_PACKET_FORMAT, 0x1B, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+    # 创建一个UDP socket
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    client.settimeout(10)  # 增加超时时间为10秒
+
+    try:
+        # 发送NTP请求
+        client.sendto(ntp_request, (ntp_server, NTP_PORT))
+        print(f"NTP request sent to {ntp_server}")
+        # 接收NTP响应
+        response, address = client.recvfrom(1024)
+        print(f"NTP response received from {address}")
+    except socket.timeout:
+        print("NTP request timed out")
+        return None
+    finally:
+        client.close()
+
+    # 解析NTP响应
+    unpacked = struct.unpack(NTP_PACKET_FORMAT, response[:48])
+    transmit_timestamp = unpacked[10] + float(unpacked[11]) / 2**32
+    transmit_timestamp -= NTP_EPOCH
+
+    return transmit_timestamp
+
+def sync_time():
+    timestamp = get_ntp_time()
+    if timestamp is None:
+        return
+
+    # 将时间戳转换为本地时间
+    local_time = time.localtime(timestamp)
+    formatted_time = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
+
+    print(f"Network time: {formatted_time}")
+
+    # 设置系统时间（需要管理员权限）
+    # Windows
+    # os.system(f'date {formatted_time[5:7]}/{formatted_time[8:10]}/{formatted_time[0:4]}')
+    # os.system(f'time {formatted_time[11:19]}')
+
+    # Linux
+    # os.system(f'date -s "{formatted_time}"')
+
+```
