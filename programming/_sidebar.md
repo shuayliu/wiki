@@ -6,5 +6,6 @@
   - [PicoScript笔记](programming/picoScriptNotes.md)
   - [Python Notes](programming/PyNotes.md)
   - [Autohotkey Notes](programming/AHKNotes.md)
+  - [OriginPro Notes](programming/OriginProNotes.md)
   - [CV-Simulation](programming/cv_simulation.md)
 
