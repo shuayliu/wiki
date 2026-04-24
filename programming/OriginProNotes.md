@@ -77,3 +77,126 @@ for(int i = 1; i <= ns; i++)
 }
 ```
 
+## 批量绘制XYXYXYinSheet
+
+```labtalk
+string bk$ = %H;
+string sh$ = wks.name$;
+
+int n = wks.nCols;
+
+for (ii = 1; ii <= n-1; ii+=2) {
+
+    win -a %(bk$);
+    page.active$ = sh$;
+
+    int c1 = ii;
+    int c2 = ii+1;
+
+    plotxy iy:=($(c1),$(c2)) plot:=200;
+	themeApply2g ShLiu_Frame;
+	legend -r;
+	legend.SMARTPOS=1;
+	legend.SHOWFRAME=0;
+	legend.TRANSPARENCY=100;
+	
+	sec -p 0.1;// 等待ui反应过来，否则graph fit to page不生效
+	gfitp margin:=2 aspect:=1;
+
+    win -r %H "Graph_$(c1)_$(c2)";
+    // 使用 -p 参数，坐标范围是 0-100
+    // 这里的 10 90 表示图层左边起 10%，底边起 90%（即左上角）
+    label -p 10 90 -n myNote "Batch Processed";
+    myNote.fsize = 15;
+    // 🔥 防卡顿
+    sec -p 0.3;
+}
+
+```
+
+## 循环设置列注释
+
+```labtalk
+// 用wcol动态设置
+loop(ii, 1, wks.ncols) {
+    wcol(ii)[C]$ = "Data $(ii)"; 
+};
+
+```
+
+每隔两列，如果是纯数字，则转换为100-X
+
+```labtalk
+int nStart = 2; 
+
+for(int ii = nStart; ii <= wks.ncols; ii = ii + 2) {
+    // 1. 暴力提取数值
+    double valA = [%(wcol(ii)[C]$ )]; 
+       
+    if (valA != NANUM) {
+        double res = 100 - valA;
+        
+        // 2. 先把复杂的格式拼接到字符串变量中
+        // 在字符串变量里，%% 是 %，\-(2) 是下标 2
+        string strFinal$ = "$(res)%% CO\-(2)";
+        
+        // 3. 直接赋值变量，避开直接解析文本时的转义错误
+        wcol(ii)[C]$ = strFinal$;
+        
+        type "第 $(ii) 列成功：原值 $(valA) -> 新值 %(strFinal$)";
+    } else {
+        type "第 $(ii) 列跳过：不是有效数字";
+    }
+}
+
+```
+
+## 列注释是数组
+
+```labtalk
+string strList$ = "100 90 89 85 84 80 75 74 70 60 50 40 30 20 10 0";
+int nToken = 1;
+int nTotal = wks.ncols;
+
+type "开始处理，总列数: $(nTotal)";
+
+for(int ii = 2; ii <= nTotal; ii = ii + 2) {
+    // 1. 取词
+    string strVal$ = strList.GetToken(nToken, " ")$;
+    
+    // 如果取词为空则停止（防止列数多于数字个数）
+    if (strVal.Length() == 0) break;
+
+    // 2. 数值计算
+    // 使用 %() 确保将字符串转为数值
+    double valA = %(strVal$); 
+    double res = 100 - valA;
+
+    // 3. 赋值 (注意 \% 代表百分号符号)
+    // 这里的 $(res) 会自动转为字符串内容
+    string strComment$ = "$(res)%% CO\-(2)";
+    
+    wcol(ii-1)[C]$ = strComment$;
+    wcol(ii)[C]$ = strComment$;
+    
+    type "Loop ii=$(ii): 原值=%(strVal$), 计算值=$(res), 设置为:%(strComment$)";
+    
+    nToken++;
+}
+
+type "全部处理完成！";
+doc -uw;
+```
+
+
+
+## 添加text标签
+
+```labtalk
+// 使用 -p 参数，坐标范围是 0-100
+// 这里的 10 90 表示图层左边起 10%，底边起 90%（即左上角）
+label -p 10 90 -n myNote "Batch Processed";
+myNote.fsize = 15
+myNote.text$ = "Hello Origin";
+```
+
