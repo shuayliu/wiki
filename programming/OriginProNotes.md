@@ -26,6 +26,24 @@ doc -e L { set %C -w 1000; };
 doc -uw; 
 ```
 
+
+
+### 3. 设置所有字体
+
+Arial 的序号是1，通过序号索引。可以设置后`xb.font=` 查看序号
+
+```labtalk
+doc -e L { 
+    xb.font = 1; 
+    yl.font = 1;
+    layer.x.label.font = 1;
+    layer.y.label.font = 1;
+}
+legend.font = 1;
+```
+
+
+
 ---
 
 ## 二、 自动化批量绘图 (Batch Plotting)
