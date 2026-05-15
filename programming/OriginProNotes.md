@@ -86,7 +86,8 @@ int nSheets = page.nlayers;   // 获取总 Sheet 数量
 type "工作簿 %(strBook$) 中共有 $(nSheets) 个 Sheet";
 type "--------------------------------";
 
-int nCol = 14;                // 目标列号
+int nXCol = 1;                // 显式指定 X 列号（例如第 1 列）
+int nYCol = 14;               // 目标 Y 列号（第 14 列）
 
 // 1. 先创建一个新的折线图窗口
 win -t plot line;
@@ -103,8 +104,11 @@ for(int ii = 1; ii <= nSheets; ii++) {
     type "正在处理第 $(ii) 个 Sheet: %(strSheet$)";
 
     if (wks.ncols >= nCol) {
-        // 使用具体的索引定义 Range，确保引用准确
-        range rData = [%(strBook$)]$(ii)!wcol(nCol);
+        /* 
+           使用 (X, Y) 语法定义 range。
+           wcol(nXCol) 指定 X，wcol(nYCol) 指定 Y。
+        */
+        range rData = [%(strBook$)]$(ii)!(wcol(nXCol), wcol(nYCol));
         
         // 绘图：将数据添加到目标 Graph 的第 1 图层
         plotxy iy:=rData plot:=200 ogl:=[%(targetGraph$)]1!;
